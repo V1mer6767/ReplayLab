@@ -7,103 +7,112 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <style>
   :root{
-    --bg:#050706;
-    --panel:#0B0F0C;
-    --panel-2:#0F1512;
-    --border:#1B2620;
-    --text:#DFF7E6;
-    --muted:#5A7565;
-    --muted-2:#84A38C;
-    --long:#2FA660;
-    --long-dim:#0F2A1B;
-    --short:#C4453D;
-    --short-dim:#301716;
-    --amber:#2FA660;
-    --amber-dim:#0C2417;
+    --bg:#131722;
+    --panel:#1e222d;
+    --panel-2:#2a2e39;
+    --border:#2a2e39;
+    --text:#d1d4dc;
+    --muted:#787b86;
+    --muted-2:#9598a1;
+    --accent:#2962ff;
+    --accent-dim:#132242;
+    --long:#26a69a;
+    --long-dim:#0f2b28;
+    --short:#ef5350;
+    --short-dim:#3a1c1b;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
-  body{background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; min-height:100vh;}
-  .mono{font-family:'IBM Plex Mono',monospace;}
-  .app{max-width:1180px; margin:0 auto; padding:0 20px 64px;}
+  body{
+    background:var(--bg); color:var(--text); min-height:100vh;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .mono{font-family:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;}
+  .app{max-width:1320px; margin:0 auto; padding:0 16px 40px;}
 
-  header{padding:28px 0 18px; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px;}
-  h1{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:28px; margin:0; letter-spacing:-.01em;}
-  .subtitle{font-size:12.5px; color:var(--muted); margin-top:4px;}
+  header{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 4px; border-bottom:1px solid var(--border); margin-bottom:14px;
+  }
+  .brand{display:flex; align-items:center; gap:9px;}
+  .brand-dot{width:9px; height:9px; border-radius:50%; background:var(--accent);}
+  h1{font-weight:600; font-size:15px; margin:0; letter-spacing:.01em;}
+  .subtitle{font-size:11.5px; color:var(--muted); margin:0;}
 
   .btn{
-    font-family:'Inter',sans-serif; font-size:13px; border-radius:8px;
+    font-family:inherit; font-size:12.5px; border-radius:4px;
     border:1px solid var(--border); background:var(--panel); color:var(--text);
-    padding:8px 13px; cursor:pointer;
+    padding:6px 11px; cursor:pointer;
   }
-  .btn:hover{border-color:#2c3831;}
-  .btn:disabled{opacity:.4; cursor:not-allowed;}
-  .btn-primary{background:var(--amber); color:#F0FFF4; border-color:var(--amber); font-weight:600;}
-  .btn-primary:hover{filter:brightness(1.1);}
+  .btn:hover{border-color:#3c4250; background:var(--panel-2);}
+  .btn:disabled{opacity:.35; cursor:not-allowed;}
+  .btn-primary{background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600;}
+  .btn-primary:hover{filter:brightness(1.12); background:var(--accent);}
   .btn-long{background:var(--long-dim); color:var(--long); border-color:var(--long);}
   .btn-short{background:var(--short-dim); color:var(--short); border-color:var(--short);}
   select, input[type=text], input[type=number]{
-    font-family:'Inter',sans-serif; font-size:13px; border-radius:8px;
+    font-family:inherit; font-size:12.5px; border-radius:4px;
     border:1px solid var(--border); background:var(--bg); color:var(--text);
-    padding:8px 10px;
+    padding:6px 9px;
   }
 
   .panel-box{
-    border:1px solid var(--border); border-radius:12px; background:var(--panel);
-    padding:16px 18px; margin-bottom:16px;
+    border:1px solid var(--border); border-radius:6px; background:var(--panel);
+    padding:12px 14px; margin-bottom:14px;
   }
   .panel-title{
-    font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.08em;
-    text-transform:uppercase; color:var(--muted); margin:0 0 12px;
+    font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 10px;
   }
 
-  .loader-row{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
-  .loader-row input[type=file]{
-    font-size:12.5px; color:var(--muted-2);
-  }
-  .hint{font-size:11.5px; color:var(--muted); margin-top:10px; line-height:1.6;}
+  .loader-row{display:flex; gap:9px; align-items:center; flex-wrap:wrap;}
+  .loader-row input[type=file]{ font-size:12px; color:var(--muted-2); }
+  .hint{font-size:11px; color:var(--muted); margin-top:9px; line-height:1.6;}
   .hint b{color:var(--muted-2);}
 
-  #chartWrap{
-    border:1px solid var(--border); border-radius:12px; overflow:hidden;
-    background:var(--panel); margin-bottom:16px; position:relative;
+  /* ===== Chart shell: vertical toolbar + chart, TradingView style ===== */
+  .chart-shell{ display:flex; gap:0; border:1px solid var(--border); border-radius:6px; overflow:hidden; margin-bottom:12px; }
+  .tool-sidebar{
+    display:flex; flex-direction:column; gap:2px; padding:8px 6px;
+    background:var(--panel); border-right:1px solid var(--border); flex-shrink:0;
   }
-  #chart{width:100%; height:460px;}
-  .toolbar{
-    display:flex; gap:6px; align-items:center; flex-wrap:wrap;
-    background:var(--panel); border:1px solid var(--border); border-radius:10px;
-    padding:8px 10px; margin-bottom:12px;
-  }
-  .toolbar .spacer{flex:1;}
+  .tool-sidebar .spacer{flex:1;}
   .tool-btn{
     width:34px; height:34px; display:flex; align-items:center; justify-content:center;
-    font-size:15px; border-radius:8px; border:1px solid var(--border);
-    background:var(--bg); color:var(--muted-2); cursor:pointer;
+    font-size:15px; border-radius:4px; border:1px solid transparent;
+    background:transparent; color:var(--muted-2); cursor:pointer;
   }
-  .tool-btn:hover{color:var(--text); border-color:#2c3831;}
-  .tool-btn.active{background:var(--amber-dim); color:var(--amber); border-color:var(--amber);}
+  .tool-btn:hover{color:var(--text); background:var(--panel-2);}
+  .tool-btn.active{background:var(--accent-dim); color:var(--accent);}
+  .tool-clear-btn{
+    width:34px; height:30px; display:flex; align-items:center; justify-content:center;
+    font-size:14px; border-radius:4px; border:1px solid transparent;
+    background:transparent; color:var(--muted-2); cursor:pointer;
+  }
+  .tool-clear-btn:hover{color:var(--short); background:var(--short-dim);}
+
+  .chart-main{flex:1; min-width:0; display:flex; flex-direction:column;}
+
+  #chartWrap{ background:var(--bg); position:relative; }
+  #chart{width:100%; height:460px;}
   #drawCanvas{ position:absolute; inset:0; pointer-events:none; z-index:4; cursor:crosshair; }
   #drawCanvas.active{ pointer-events:auto; }
 
-  #chartOverlay{
-    position:absolute; inset:0; pointer-events:none; z-index:5;
-  }
+  #chartOverlay{ position:absolute; inset:0; pointer-events:none; z-index:5; }
   .price-handle{
     position:absolute; left:0; right:0; height:16px; margin-top:-8px;
     cursor:ns-resize; pointer-events:auto; display:none;
   }
-  .price-handle::before{
-    content:''; position:absolute; left:0; right:0; top:8px; height:1px;
-  }
+  .price-handle::before{ content:''; position:absolute; left:0; right:0; top:8px; height:1px; }
   .price-handle.sl::before{ background:repeating-linear-gradient(to right, var(--short) 0 6px, transparent 6px 11px); }
   .price-handle.tp::before{ background:repeating-linear-gradient(to right, var(--long) 0 6px, transparent 6px 11px); }
   .price-handle .grip{
     position:absolute; right:6px; top:1px; font-family:'IBM Plex Mono',monospace; font-size:10px;
-    font-weight:600; padding:1px 6px; border-radius:4px; color:#0B0F0C;
+    font-weight:600; padding:1px 6px; border-radius:3px; color:#0e1117;
   }
   .price-handle.sl .grip{ background:var(--short); }
   .price-handle.tp .grip{ background:var(--long); }
@@ -113,43 +122,58 @@
     flex-direction:column; gap:8px; color:var(--muted); font-size:13px; text-align:center; padding:20px;
   }
 
-  .controls{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px;}
+  /* Bottom bar under chart, TradingView time-scale-bar style */
+  .controls{
+    display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+    background:var(--panel); border-top:1px solid var(--border); padding:7px 10px;
+  }
   .controls .spacer{flex:1;}
-  .slider-row{display:flex; align-items:center; gap:10px; margin-bottom:16px;}
-  .slider-row input[type=range]{flex:1; accent-color:var(--amber);}
+  .slider-row{
+    display:flex; align-items:center; gap:10px;
+    background:var(--panel); border-top:1px solid var(--border); padding:7px 10px;
+  }
+  .slider-row input[type=range]{flex:1; accent-color:var(--accent);}
   .bar-info{
-    font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted-2);
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--muted-2);
     display:flex; gap:16px; flex-wrap:wrap;
+    background:var(--panel); border-top:1px solid var(--border); padding:7px 10px; margin-bottom:14px;
   }
   .bar-info b{color:var(--text);}
 
-  .trade-row{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
-  .stat{
-    font-family:'IBM Plex Mono',monospace; font-size:13px;
-  }
+  .trade-row{display:flex; gap:9px; align-items:center; flex-wrap:wrap;}
+  .stat{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; }
   .stat.pos{color:var(--long);}
   .stat.neg{color:var(--short);}
 
-  table{width:100%; border-collapse:collapse; margin-top:10px;}
+  table{width:100%; border-collapse:collapse; margin-top:8px;}
   thead th{
     text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.06em;
-    text-transform:uppercase; color:var(--muted); padding:8px 10px; border-bottom:1px solid var(--border);
+    text-transform:uppercase; color:var(--muted); padding:7px 9px; border-bottom:1px solid var(--border);
   }
-  tbody td{padding:7px 10px; font-size:12.5px; border-bottom:1px solid var(--border); font-family:'IBM Plex Mono',monospace;}
+  tbody td{padding:6px 9px; font-size:12px; border-bottom:1px solid var(--border); font-family:'IBM Plex Mono',monospace;}
   tbody tr:last-child td{border-bottom:none;}
   .result.pos{color:var(--long);}
   .result.neg{color:var(--short);}
-  .empty-trades{color:var(--muted); font-size:12.5px; padding:10px 0;}
+  .empty-trades{color:var(--muted); font-size:12px; padding:10px 0;}
 
-  footer{margin-top:8px; text-align:center; color:var(--muted); font-size:11px; font-family:'IBM Plex Mono',monospace;}
+  footer{margin-top:6px; text-align:center; color:var(--muted); font-size:10.5px; font-family:'IBM Plex Mono',monospace;}
+
+  @media (max-width:720px){
+    .chart-shell{ flex-direction:column; }
+    .tool-sidebar{ flex-direction:row; border-right:none; border-bottom:1px solid var(--border); }
+    .tool-sidebar .spacer{ display:none; }
+  }
 </style>
 </head>
 <body>
 <div class="app">
   <header>
-    <div>
-      <h1>ReplayLab</h1>
-      <p class="subtitle">бектест на реальній історії — свічка за свічкою</p>
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <div>
+        <h1>ReplayLab</h1>
+        <p class="subtitle">бектест на реальній історії</p>
+      </div>
     </div>
     <button class="btn" id="refreshBtn" title="Підтягнути свіжу версію сторінки">⟳ Оновити</button>
   </header>
@@ -167,58 +191,62 @@
     </p>
   </div>
 
-  <div class="toolbar" id="drawToolbar">
-    <button class="tool-btn active" id="toolCursor" title="Курсор / панорама">🖱</button>
-    <button class="tool-btn" id="toolLine" title="Трендова лінія">╱</button>
-    <button class="tool-btn" id="toolHLine" title="Горизонтальний рівень">—</button>
-    <button class="tool-btn" id="toolRect" title="Зона (прямокутник)">▭</button>
-    <button class="tool-btn" id="toolHigh" title="Позначити хай">▲H</button>
-    <button class="tool-btn" id="toolLow" title="Позначити лоу">▼L</button>
-    <div class="spacer"></div>
-    <button class="btn" id="clearDrawBtn">🗑 Очистити малюнки</button>
-  </div>
-
-  <div id="chartWrap">
-    <div id="chart"></div>
-    <div id="chartOverlay">
-      <canvas id="drawCanvas"></canvas>
-      <div class="price-handle sl" id="slHandle"><span class="grip" id="slGrip">SL</span></div>
-      <div class="price-handle tp" id="tpHandle"><span class="grip" id="tpGrip">TP</span></div>
+  <div class="chart-shell">
+    <div class="tool-sidebar" id="drawToolbar">
+      <button class="tool-btn active" id="toolCursor" title="Курсор / панорама">🖱</button>
+      <button class="tool-btn" id="toolLine" title="Трендова лінія">╱</button>
+      <button class="tool-btn" id="toolHLine" title="Горизонтальний рівень">—</button>
+      <button class="tool-btn" id="toolRect" title="Зона (прямокутник)">▭</button>
+      <button class="tool-btn" id="toolHigh" title="Позначити хай">▲</button>
+      <button class="tool-btn" id="toolLow" title="Позначити лоу">▼</button>
+      <div class="spacer"></div>
+      <button class="tool-clear-btn" id="clearDrawBtn" title="Очистити малюнки">🗑</button>
     </div>
-    <div class="empty-chart" id="emptyState">
-      <div>Завантаж CSV з MT5 або демо-дані вище, щоб почати</div>
+
+    <div class="chart-main">
+      <div id="chartWrap">
+        <div id="chart"></div>
+        <div id="chartOverlay">
+          <canvas id="drawCanvas"></canvas>
+          <div class="price-handle sl" id="slHandle"><span class="grip" id="slGrip">SL</span></div>
+          <div class="price-handle tp" id="tpHandle"><span class="grip" id="tpGrip">TP</span></div>
+        </div>
+        <div class="empty-chart" id="emptyState">
+          <div>Завантаж CSV з MT5 або демо-дані вище, щоб почати</div>
+        </div>
+      </div>
+
+      <div class="controls" id="playbackControls" style="display:none;">
+        <button class="btn" id="resetBtn">⏮ Спочатку</button>
+        <button class="btn" id="stepBackBtn">⏪ Крок назад</button>
+        <button class="btn btn-primary" id="playPauseBtn">▶ Play</button>
+        <button class="btn" id="stepFwdBtn">Крок вперед ⏩</button>
+        <select id="speedSelect">
+          <option value="1500">Повільно</option>
+          <option value="700" selected>Звичайно</option>
+          <option value="300">Швидко</option>
+          <option value="100">Дуже швидко</option>
+        </select>
+        <div class="spacer"></div>
+        <label class="mono" style="font-size:11px; color:var(--muted-2); display:flex; align-items:center; gap:5px;">
+          Бичача <input type="color" id="upColorInput" value="#26a69a" style="width:26px; height:24px; padding:2px; border-radius:4px; background:var(--bg); border:1px solid var(--border);">
+        </label>
+        <label class="mono" style="font-size:11px; color:var(--muted-2); display:flex; align-items:center; gap:5px;">
+          Ведмежа <input type="color" id="downColorInput" value="#ef5350" style="width:26px; height:24px; padding:2px; border-radius:4px; background:var(--bg); border:1px solid var(--border);">
+        </label>
+        <button class="btn" id="randomStartBtn">🎲 Рандомна точка</button>
+      </div>
+
+      <div class="slider-row" id="sliderRow" style="display:none;">
+        <span class="mono" style="font-size:11px; color:var(--muted);">Позиція:</span>
+        <input type="range" id="posSlider" min="0" max="0" value="0">
+      </div>
+
+      <div class="bar-info" id="barInfo"></div>
     </div>
   </div>
 
-  <div class="controls" id="playbackControls" style="display:none;">
-    <button class="btn" id="resetBtn">⏮ Спочатку</button>
-    <button class="btn" id="stepBackBtn">⏪ Крок назад</button>
-    <button class="btn btn-primary" id="playPauseBtn">▶ Play</button>
-    <button class="btn" id="stepFwdBtn">Крок вперед ⏩</button>
-    <select id="speedSelect">
-      <option value="1500">Повільно</option>
-      <option value="700" selected>Звичайно</option>
-      <option value="300">Швидко</option>
-      <option value="100">Дуже швидко</option>
-    </select>
-    <div class="spacer"></div>
-    <label class="mono" style="font-size:11px; color:var(--muted-2); display:flex; align-items:center; gap:5px;">
-      Бичача <input type="color" id="upColorInput" value="#2fa660" style="width:28px; height:26px; padding:2px; border-radius:6px; background:var(--bg); border:1px solid var(--border);">
-    </label>
-    <label class="mono" style="font-size:11px; color:var(--muted-2); display:flex; align-items:center; gap:5px;">
-      Ведмежа <input type="color" id="downColorInput" value="#c4453d" style="width:28px; height:26px; padding:2px; border-radius:6px; background:var(--bg); border:1px solid var(--border);">
-    </label>
-    <button class="btn" id="randomStartBtn">🎲 Рандомна точка</button>
-  </div>
-
-  <div class="slider-row" id="sliderRow" style="display:none;">
-    <span class="mono" style="font-size:11px; color:var(--muted);">Позиція:</span>
-    <input type="range" id="posSlider" min="0" max="0" value="0">
-  </div>
-
-  <div class="bar-info" id="barInfo"></div>
-
-  <div class="panel-box" id="tradeBox" style="display:none; margin-top:16px;">
+  <div class="panel-box" id="tradeBox" style="display:none;">
     <p class="panel-title">Симулятор угод</p>
     <div class="trade-row">
       <label class="mono" style="font-size:11px; color:var(--muted-2);">Обʼєм</label>
@@ -266,16 +294,16 @@ const INITIAL_WINDOW = 60;
 function initChart(){
   const container = document.getElementById('chart');
   chart = LightweightCharts.createChart(container, {
-    layout: { background: { color: '#0B0F0C' }, textColor: '#84A38C' },
-    grid: { vertLines: { color: '#1B2620' }, horzLines: { color: '#1B2620' } },
-    rightPriceScale: { borderColor: '#1B2620' },
-    timeScale: { borderColor: '#1B2620', timeVisible: true, secondsVisible: false },
+    layout: { background: { color: '#131722' }, textColor: '#787b86' },
+    grid: { vertLines: { color: '#1e222d' }, horzLines: { color: '#1e222d' } },
+    rightPriceScale: { borderColor: '#2a2e39' },
+    timeScale: { borderColor: '#2a2e39', timeVisible: true, secondsVisible: false },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
   });
   candleSeries = chart.addCandlestickSeries({
-    upColor: '#2FA660', downColor: '#C4453D',
-    borderUpColor: '#2FA660', borderDownColor: '#C4453D',
-    wickUpColor: '#2FA660', wickDownColor: '#C4453D',
+    upColor: '#26a69a', downColor: '#ef5350',
+    borderUpColor: '#26a69a', borderDownColor: '#ef5350',
+    wickUpColor: '#26a69a', wickDownColor: '#ef5350',
   });
   let lastWidth = 0;
   new ResizeObserver(entries=>{
@@ -522,7 +550,7 @@ function openTrade(dir){
   const entry = last.close;
 
   entryLine = candleSeries.createPriceLine({
-    price: entry, color: '#2FA660', lineWidth: 1,
+    price: entry, color: '#26a69a', lineWidth: 1,
     lineStyle: LightweightCharts.LineStyle.Solid, axisLabelVisible: true, title: 'Вхід'
   });
 
@@ -533,11 +561,11 @@ function openTrade(dir){
   const tpPrice = dir==='long' ? entry + offsetPrice : entry - offsetPrice;
 
   slLine = candleSeries.createPriceLine({
-    price: slPrice, color: '#C4453D', lineWidth: 1,
+    price: slPrice, color: '#ef5350', lineWidth: 1,
     lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: true, title: 'SL'
   });
   tpLine = candleSeries.createPriceLine({
-    price: tpPrice, color: '#2FA660', lineWidth: 1,
+    price: tpPrice, color: '#26a69a', lineWidth: 1,
     lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: true, title: 'TP'
   });
 
@@ -731,7 +759,7 @@ document.getElementById('drawCanvas').addEventListener('pointerdown', (e)=>{
       markers.push({
         time: bar.time,
         position: currentTool==='high' ? 'aboveBar' : 'belowBar',
-        color: currentTool==='high' ? '#2FA660' : '#C4453D',
+        color: currentTool==='high' ? '#26a69a' : '#ef5350',
         shape: currentTool==='high' ? 'arrowDown' : 'arrowUp',
         text: currentTool==='high' ? 'H' : 'L',
       });
@@ -783,7 +811,7 @@ function redrawDrawings(){
     if(d.type === 'hline'){
       const y = candleSeries.priceToCoordinate(d.p1.price);
       if(y==null) continue;
-      drawCtx.strokeStyle = '#2FA660';
+      drawCtx.strokeStyle = '#2962ff';
       drawCtx.lineWidth = 1;
       drawCtx.setLineDash([5,4]);
       drawCtx.beginPath();
@@ -798,15 +826,15 @@ function redrawDrawings(){
       const y2 = candleSeries.priceToCoordinate(d.p2.price);
       if(x1==null||y1==null||x2==null||y2==null) continue;
       if(d.type === 'line'){
-        drawCtx.strokeStyle = '#E8A33D';
+        drawCtx.strokeStyle = '#2962ff';
         drawCtx.lineWidth = 1.5;
         drawCtx.beginPath();
         drawCtx.moveTo(x1,y1);
         drawCtx.lineTo(x2,y2);
         drawCtx.stroke();
       } else if(d.type === 'rect'){
-        drawCtx.fillStyle = 'rgba(47,166,96,0.12)';
-        drawCtx.strokeStyle = 'rgba(47,166,96,0.6)';
+        drawCtx.fillStyle = 'rgba(41,98,255,0.12)';
+        drawCtx.strokeStyle = 'rgba(41,98,255,0.6)';
         drawCtx.lineWidth = 1;
         const rx = Math.min(x1,x2), ry = Math.min(y1,y2);
         const rw = Math.abs(x2-x1), rh = Math.abs(y2-y1);
