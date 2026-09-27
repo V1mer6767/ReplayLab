@@ -90,21 +90,24 @@
   /* ===== Chart shell: vertical toolbar + chart, TradingView style ===== */
   .chart-shell{ display:flex; gap:0; border:1px solid var(--border); border-radius:6px; overflow:hidden; margin-bottom:12px; }
   .tool-sidebar{
-    display:flex; flex-direction:column; gap:2px; padding:8px 6px;
+    display:flex; flex-direction:column; gap:3px; padding:10px 7px;
     background:var(--panel); border-right:1px solid var(--border); flex-shrink:0;
   }
   .tool-sidebar .spacer{flex:1;}
+  .tool-divider{ height:1px; background:var(--border); margin:5px 3px; }
   .tool-btn{
-    width:34px; height:34px; display:flex; align-items:center; justify-content:center;
-    font-size:15px; border-radius:4px; border:1px solid transparent;
+    width:36px; height:36px; display:flex; align-items:center; justify-content:center;
+    border-radius:6px; border:1px solid transparent;
     background:transparent; color:var(--muted-2); cursor:pointer;
+    transition:background .12s, color .12s;
   }
   .tool-btn:hover{color:var(--text); background:var(--panel-2);}
   .tool-btn.active{background:var(--accent-dim); color:var(--accent);}
   .tool-clear-btn{
-    width:34px; height:30px; display:flex; align-items:center; justify-content:center;
-    font-size:14px; border-radius:4px; border:1px solid transparent;
+    width:36px; height:32px; display:flex; align-items:center; justify-content:center;
+    border-radius:6px; border:1px solid transparent;
     background:transparent; color:var(--muted-2); cursor:pointer;
+    transition:background .12s, color .12s;
   }
   .tool-clear-btn:hover{color:var(--short); background:var(--short-dim);}
 
@@ -175,6 +178,7 @@
     .chart-shell{ flex-direction:column; }
     .tool-sidebar{ flex-direction:row; border-right:none; border-bottom:1px solid var(--border); }
     .tool-sidebar .spacer{ display:none; }
+    .tool-divider{ width:1px; height:auto; margin:3px 5px; }
   }
 </style>
 </head>
@@ -183,10 +187,7 @@
   <header>
     <div class="brand">
       <span class="brand-dot"></span>
-      <div>
-        <h1>ReplayLab</h1>
-        <p class="subtitle">бектест на реальній історії</p>
-      </div>
+      <h1>ReplayLab</h1>
     </div>
     <div style="display:flex; gap:8px;">
       <button class="btn" id="themeToggle" title="Перемкнути тему">🌙</button>
@@ -195,28 +196,39 @@
   </header>
 
   <div class="panel-box">
-    <p class="panel-title">Дані</p>
     <div class="loader-row">
       <input type="file" id="fileInput" accept=".csv,.txt">
-      <button class="btn" id="loadBtcBtn">Демо: BTCUSDT (Binance)</button>
-      <button class="btn" id="loadEthBtn">Демо: ETHUSDT (Binance)</button>
     </div>
-    <p class="hint">
-      <b>Як експортувати з MT5:</b> відкрий графік потрібної пари → Сервіс (Tools) → Центр історії котирувань (History Center) → вибери символ і таймфрейм → Экспорт (Export) → збережи .csv.
-      Підтримується і стандартний, і табличний формат MT4/MT5 експорту.
-    </p>
+    <p class="hint">Експорт з MT5: графік пари → Сервіс → Центр історії котирувань → символ і таймфрейм → Экспорт → .csv</p>
   </div>
 
   <div class="chart-shell">
     <div class="tool-sidebar" id="drawToolbar">
-      <button class="tool-btn active" id="toolCursor" title="Курсор / панорама">🖱</button>
-      <button class="tool-btn" id="toolLine" title="Трендова лінія">╱</button>
-      <button class="tool-btn" id="toolHLine" title="Горизонтальний рівень">—</button>
-      <button class="tool-btn" id="toolRect" title="Зона (прямокутник)">▭</button>
-      <button class="tool-btn" id="toolHigh" title="Позначити хай">▲</button>
-      <button class="tool-btn" id="toolLow" title="Позначити лоу">▼</button>
+      <button class="tool-btn active" id="toolCursor" title="Курсор / панорама">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3l7.07 17 2.51-7.39L21 10.07z"/></svg>
+      </button>
+      <div class="tool-divider"></div>
+      <button class="tool-btn" id="toolLine" title="Трендова лінія">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="20" x2="20" y2="4"/><circle cx="4" cy="20" r="1.6" fill="currentColor" stroke="none"/><circle cx="20" cy="4" r="1.6" fill="currentColor" stroke="none"/></svg>
+      </button>
+      <button class="tool-btn" id="toolHLine" title="Горизонтальний рівень">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="3.2 3.2"><line x1="3" y1="12" x2="21" y2="12"/></svg>
+      </button>
+      <button class="tool-btn" id="toolRect" title="Зона (прямокутник)">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="6" width="16" height="12" rx="1.5"/></svg>
+      </button>
+      <div class="tool-divider"></div>
+      <button class="tool-btn" id="toolHigh" title="Позначити хай">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+      </button>
+      <button class="tool-btn" id="toolLow" title="Позначити лоу">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      </button>
       <div class="spacer"></div>
-      <button class="tool-clear-btn" id="clearDrawBtn" title="Очистити малюнки">🗑</button>
+      <div class="tool-divider"></div>
+      <button class="tool-clear-btn" id="clearDrawBtn" title="Очистити малюнки">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6"/></svg>
+      </button>
     </div>
 
     <div class="chart-main">
@@ -228,7 +240,7 @@
           <div class="price-handle tp" id="tpHandle"><span class="grip" id="tpGrip">TP</span></div>
         </div>
         <div class="empty-chart" id="emptyState">
-          <div>Завантаж CSV з MT5 або демо-дані вище, щоб почати</div>
+          <div>Завантаж CSV з MT5, щоб почати</div>
         </div>
       </div>
 
@@ -263,7 +275,6 @@
   </div>
 
   <div class="panel-box" id="tradeBox" style="display:none;">
-    <p class="panel-title">Симулятор угод</p>
     <div class="trade-row">
       <label class="mono" style="font-size:11px; color:var(--muted-2);">Обʼєм</label>
       <input type="number" id="tradeSize" value="1" step="0.01" style="width:80px;">
@@ -286,8 +297,7 @@
     <div class="empty-trades" id="emptyTrades">Ще немає угод у цій сесії — натисни Buy або Sell на поточній свічці.</div>
   </div>
 
-  <footer>дані обробляються локально в браузері, нічого не завантажується нікуди</footer>
-</div>
+  </div>
 
 <script>
 let allBars = [];
@@ -698,22 +708,6 @@ document.getElementById('fileInput').addEventListener('change', (e)=>{
   };
   reader.readAsText(file);
 });
-
-async function loadBinanceDemo(symbol){
-  try{
-    const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1h&limit=500`);
-    const data = await res.json();
-    const bars = data.map(k=>({
-      time: Math.floor(k[0]/1000),
-      open: parseFloat(k[1]), high: parseFloat(k[2]), low: parseFloat(k[3]), close: parseFloat(k[4])
-    }));
-    loadBars(bars);
-  }catch(e){
-    alert('Не вдалось завантажити демо-дані (можливо, немає інтернету або Binance недоступний з цієї мережі).');
-  }
-}
-document.getElementById('loadBtcBtn').addEventListener('click', ()=>loadBinanceDemo('BTCUSDT'));
-document.getElementById('loadEthBtn').addEventListener('click', ()=>loadBinanceDemo('ETHUSDT'));
 
 /* ===== Drawing tools ===== */
 function setTool(tool){
