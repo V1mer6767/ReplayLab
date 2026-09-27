@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReplayLab — бектест на історії</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+  :root{
+    --bg:#050706;
+    --panel:#0B0F0C;
+    --panel-2:#0F1512;
+    --border:#1B2620;
+    --text:#DFF7E6;
+    --muted:#5A7565;
+    --muted-2:#84A38C;
+    --long:#2FA660;
+    --long-dim:#0F2A1B;
+    --short:#C4453D;
+    --short-dim:#301716;
+    --amber:#2FA660;
+    --amber-dim:#0C2417;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; min-height:100vh;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .app{max-width:1180px; margin:0 auto; padding:0 20px 64px;}
+
+  header{padding:28px 0 18px; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px;}
+  h1{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:28px; margin:0; letter-spacing:-.01em;}
+  .subtitle{font-size:12.5px; color:var(--muted); margin-top:4px;}
+
+  .btn{
+    font-family:'Inter',sans-serif; font-size:13px; border-radius:8px;
+    border:1px solid var(--border); background:var(--panel); color:var(--text);
+    padding:8px 13px; cursor:pointer;
+  }
+  .btn:hover{border-color:#2c3831;}
+  .btn:disabled{opacity:.4; cursor:not-allowed;}
+  .btn-primary{background:var(--amber); color:#F0FFF4; border-color:var(--amber); font-weight:600;}
+  .btn-primary:hover{filter:brightness(1.1);}
+  .btn-long{background:var(--long-dim); color:var(--long); border-color:var(--long);}
+  .btn-short{background:var(--short-dim); color:var(--short); border-color:var(--short);}
+  select, input[type=text], input[type=number]{
+    font-family:'Inter',sans-serif; font-size:13px; border-radius:8px;
+    border:1px solid var(--border); background:var(--bg); color:var(--text);
+    padding:8px 10px;
+  }
+
+  .panel-box{
+    border:1px solid var(--border); border-radius:12px; background:var(--panel);
+    padding:16px 18px; margin-bottom:16px;
+  }
+  .panel-title{
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 12px;
+  }
+
+  .loader-row{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .loader-row input[type=file]{
+    font-size:12.5px; color:var(--muted-2);
+  }
+  .hint{font-size:11.5px; color:var(--muted); margin-top:10px; line-height:1.6;}
+  .hint b{color:var(--muted-2);}
+
+  #chartWrap{
+    border:1px solid var(--border); border-radius:12px; overflow:hidden;
+    background:var(--panel); margin-bottom:16px; position:relative;
+  }
+  #chart{width:100%; height:460px;}
+  .toolbar{
+    display:flex; gap:6px; align-items:center; flex-wrap:wrap;
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:8px 10px; margin-bottom:12px;
+  }
+  .toolbar .spacer{flex:1;}
+  .tool-btn{
+    width:34px; height:34px; display:flex; align-items:center; justify-content:center;
+    font-size:15px; border-radius:8px; border:1px solid var(--border);
+    background:var(--bg); color:var(--muted-2); cursor:pointer;
+  }
+  .tool-btn:hover{color:var(--text); border-color:#2c3831;}
+  .tool-btn.active{background:var(--amber-dim); color:var(--amber); border-color:var(--amber);}
+  #drawCanvas{ position:absolute; inset:0; pointer-events:none; z-index:4; cursor:crosshair; }
+  #drawCanvas.active{ pointer-events:auto; }
+
+  #chartOverlay{
+    position:absolute; inset:0; pointer-events:none; z-index:5;
+  }
+  .price-handle{
+    position:absolute; left:0; right:0; height:16px; margin-top:-8px;
+    cursor:ns-resize; pointer-events:auto; display:none;
+  }
+  .price-handle::before{
+    content:''; position:absolute; left:0; right:0; top:8px; height:1px;
+  }
+  .price-handle.sl::before{ background:repeating-linear-gradient(to right, var(--short) 0 6px, transparent 6px 11px); }
+  .price-handle.tp::before{ background:repeating-linear-gradient(to right, var(--long) 0 6px, transparent 6px 11px); }
+  .price-handle .grip{
+    position:absolute; right:6px; top:1px; font-family:'IBM Plex Mono',monospace; font-size:10px;
+    font-weight:600; padding:1px 6px; border-radius:4px; color:#0B0F0C;
+  }
+  .price-handle.sl .grip{ background:var(--short); }
+  .price-handle.tp .grip{ background:var(--long); }
+  .price-handle:hover::before{ height:2px; top:7px; }
+  .empty-chart{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:8px; color:var(--muted); font-size:13px; text-align:center; padding:20px;
+  }
+
+  .controls{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px;}
+  .controls .spacer{flex:1;}
+  .slider-row{display:flex; align-items:center; gap:10px; margin-bottom:16px;}
+  .slider-row input[type=range]{flex:1; accent-color:var(--amber);}
+  .bar-info{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted-2);
+    display:flex; gap:16px; flex-wrap:wrap;
+  }
+  .bar-info b{color:var(--text);}
+
+  .trade-row{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .stat{
+    font-family:'IBM Plex Mono',monospace; font-size:13px;
+  }
+  .stat.pos{color:var(--long);}
+  .stat.neg{color:var(--short);}
+
+  table{width:100%; border-collapse:collapse; margin-top:10px;}
+  thead th{
+    text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--muted); padding:8px 10px; border-bottom:1px solid var(--border);
+  }
+  tbody td{padding:7px 10px; font-size:12.5px; border-bottom:1px solid var(--border); font-family:'IBM Plex Mono',monospace;}
+  tbody tr:last-child td{border-bottom:none;}
+  .result.pos{color:var(--long);}
+  .result.neg{color:var(--short);}
+  .empty-trades{color:var(--muted); font-size:12.5px; padding:10px 0;}
+
+  footer{margin-top:8px; text-align:center; color:var(--muted); font-size:11px; font-family:'IBM Plex Mono',monospace;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>ReplayLab</h1>
+      <p class="subtitle">бектест на реальній історії — свічка за свічкою</p>
+    </div>
+    <button class="btn" id="refreshBtn" title="Підтягнути свіжу версію сторінки">⟳ Оновити</button>
+  </header>
+
+  <div class="panel-box">
+    <p class="panel-title">Дані</p>
+    <div class="loader-row">
+      <input type="file" id="fileInput" accept=".csv,.txt">
+      <button class="btn" id="loadBtcBtn">Демо: BTCUSDT (Binance)</button>
+      <button class="btn" id="loadEthBtn">Демо: ETHUSDT (Binance)</button>
+    </div>
+    <p class="hint">
+      <b>Як експортувати з MT5:</b> відкрий графік потрібної пари → Сервіс (Tools) → Центр історії котирувань (History Center) → вибери символ і таймфрейм → Экспорт (Export) → збережи .csv.
+      Підтримується і стандартний, і табличний формат MT4/MT5 експорту.
+    </p>
+  </div>
+
+  <div class="toolbar" id="drawToolbar">
+    <button class="tool-btn active" id="toolCursor" title="Курсор / панорама">🖱</button>
+    <button class="tool-btn" id="toolLine" title="Трендова лінія">╱</button>
+    <button class="tool-btn" id="toolHLine" title="Горизонтальний рівень">—</button>
+    <button class="tool-btn" id="toolRect" title="Зона (прямокутник)">▭</button>
+    <button class="tool-btn" id="toolHigh" title="Позначити хай">▲H</button>
+    <button class="tool-btn" id="toolLow" title="Позначити лоу">▼L</button>
+    <div class="spacer"></div>
+    <button class="btn" id="clearDrawBtn">🗑 Очистити малюнки</button>
+  </div>
+
+  <div id="chartWrap">
+    <div id="chart"></div>
+    <div id="chartOverlay">
+      <canvas id="drawCanvas"></canvas>
+      <div class="price-handle sl" id="slHandle"><span class="grip" id="slGrip">SL</span></div>
+      <div class="price-handle tp" id="tpHandle"><span class="grip" id="tpGrip">TP</span></div>
+    </div>
+    <div class="empty-chart" id="emptyState">
+      <div>Завантаж CSV з MT5 або демо-дані вище, щоб почати</div>
+    </div>
+  </div>
+
+  <div class="controls" id="playbackControls" style="display:none;">
+    <button class="btn" id="resetBtn">⏮ Спочатку</button>
+    <button class="btn" id="stepBackBtn">⏪ Крок назад</button>
+    <button class="btn btn-primary" id="playPauseBtn">▶ Play</button>
+    <button class="btn" id="stepFwdBtn">Крок вперед ⏩</button>
+    <select id="speedSelect">
+      <option value="1500">Повільно</option>
+      <option value="700" selected>Звичайно</option>
+      <option value="300">Швидко</option>
+      <option value="100">Дуже швидко</option>
+    </select>
+    <div class="spacer"></div>
+    <label class="mono" style="font-size:11px; color:var(--muted-2); display:flex; align-items:center; gap:5px;">
+      Бичача <input type="color" id="upColorInput" value="#2fa660" style="width:28px; height:26px; padding:2px; border-radius:6px; background:var(--bg); border:1px solid var(--border);">
+    </label>
+    <label class="mono" style="font-size:11px; color:var(--muted-2); display:flex; align-items:center; gap:5px;">
+      Ведмежа <input type="color" id="downColorInput" value="#c4453d" style="width:28px; height:26px; padding:2px; border-radius:6px; background:var(--bg); border:1px solid var(--border);">
+    </label>
+    <button class="btn" id="randomStartBtn">🎲 Рандомна точка</button>
+  </div>
+
+  <div class="slider-row" id="sliderRow" style="display:none;">
+    <span class="mono" style="font-size:11px; color:var(--muted);">Позиція:</span>
+    <input type="range" id="posSlider" min="0" max="0" value="0">
+  </div>
+
+  <div class="bar-info" id="barInfo"></div>
+
+  <div class="panel-box" id="tradeBox" style="display:none; margin-top:16px;">
+    <p class="panel-title">Симулятор угод</p>
+    <div class="trade-row">
+      <label class="mono" style="font-size:11px; color:var(--muted-2);">Обʼєм</label>
+      <input type="number" id="tradeSize" value="1" step="0.01" style="width:80px;">
+      <label class="mono" style="font-size:11px; color:var(--muted-2);">$/пункт</label>
+      <input type="number" id="pointValue" value="1" step="0.01" style="width:80px;">
+      <button class="btn btn-long" id="buyBtn">Buy</button>
+      <button class="btn btn-short" id="sellBtn">Sell</button>
+      <button class="btn" id="closeBtn" disabled>Close</button>
+      <div class="spacer"></div>
+      <span class="stat" id="openPosInfo"></span>
+    </div>
+    <div style="margin-top:14px; display:flex; gap:24px; flex-wrap:wrap;">
+      <span class="mono" style="font-size:12px; color:var(--muted-2);">Угод: <b id="tradeCount" style="color:var(--text);">0</b></span>
+      <span class="mono" style="font-size:12px; color:var(--muted-2);">Разом: <span class="stat" id="totalResult">0</span></span>
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>Напрямок</th><th>Вхід</th><th>Вихід</th><th>Обʼєм</th><th>Результат</th></tr></thead>
+      <tbody id="tradesBody"></tbody>
+    </table>
+    <div class="empty-trades" id="emptyTrades">Ще немає угод у цій сесії — натисни Buy або Sell на поточній свічці.</div>
+  </div>
+
+  <footer>дані обробляються локально в браузері, нічого не завантажується нікуди</footer>
+</div>
+
+<script>
+let allBars = [];
+let revealCount = 0;
+let chart, candleSeries;
+let playing = false;
+let playTimer = null;
+let openPosition = null;
+let closedTrades = [];
+let entryLine = null, slLine = null, tpLine = null;
+let dragTarget = null; // 'sl' | 'tp' | null
+
+let currentTool = 'cursor';
+let drawings = []; // {type:'line'|'hline'|'rect', p1:{time,price}, p2?:{time,price}}
+let markers = [];  // for candleSeries.setMarkers
+let drawInProgress = null;
+let drawCanvas, drawCtx;
+const INITIAL_WINDOW = 60;
+
+function initChart(){
+  const container = document.getElementById('chart');
+  chart = LightweightCharts.createChart(container, {
+    layout: { background: { color: '#0B0F0C' }, textColor: '#84A38C' },
+    grid: { vertLines: { color: '#1B2620' }, horzLines: { color: '#1B2620' } },
+    rightPriceScale: { borderColor: '#1B2620' },
+    timeScale: { borderColor: '#1B2620', timeVisible: true, secondsVisible: false },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+  });
+  candleSeries = chart.addCandlestickSeries({
+    upColor: '#2FA660', downColor: '#C4453D',
+    borderUpColor: '#2FA660', borderDownColor: '#C4453D',
+    wickUpColor: '#2FA660', wickDownColor: '#C4453D',
+  });
+  let lastWidth = 0;
+  new ResizeObserver(entries=>{
+    for(const e of entries){
+      const w = Math.round(e.contentRect.width);
+      if(w === lastWidth) continue;
+      lastWidth = w;
+      chart.applyOptions({ width: w });
+      resizeDrawCanvas();
+      repositionHandles();
+      redrawDrawings();
+    }
+  }).observe(container);
+  chart.timeScale().subscribeVisibleLogicalRangeChange(()=> { repositionHandles(); redrawDrawings(); });
+
+  drawCanvas = document.getElementById('drawCanvas');
+  drawCtx = drawCanvas.getContext('2d');
+  resizeDrawCanvas();
+}
+
+function resizeDrawCanvas(){
+  const rect = document.getElementById('chart').getBoundingClientRect();
+  drawCanvas.width = rect.width;
+  drawCanvas.height = rect.height;
+}
+
+function applyCandleColors(upColor, downColor){
+  candleSeries.applyOptions({
+    upColor, downColor,
+    borderUpColor: upColor, borderDownColor: downColor,
+    wickUpColor: upColor, wickDownColor: downColor,
+  });
+}
+document.getElementById('upColorInput').addEventListener('input', (e)=>{
+  applyCandleColors(e.target.value, document.getElementById('downColorInput').value);
+});
+document.getElementById('downColorInput').addEventListener('input', (e)=>{
+  applyCandleColors(document.getElementById('upColorInput').value, e.target.value);
+});
+
+/* ===== CSV parsing (MT4/MT5 export formats) ===== */
+function parseCSV(text){
+  const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length);
+  if(!lines.length) return [];
+
+  const sample = lines[0];
+  let delim = ',';
+  const counts = { '\t': (sample.match(/\t/g)||[]).length, ',': (sample.match(/,/g)||[]).length, ';': (sample.match(/;/g)||[]).length };
+  delim = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
+
+  let rows = lines.map(l=>l.split(delim).map(c=>c.replace(/^["<]+|[">]+$/g,'').trim()));
+
+  let headerMap = null;
+  const first = rows[0].map(c=>c.toUpperCase());
+  if(first.some(c=>/DATE|OPEN|HIGH|LOW|CLOSE|TIME/.test(c))){
+    headerMap = {};
+    first.forEach((c,i)=>{
+      if(/DATE/.test(c)) headerMap.date = i;
+      else if(/TIME/.test(c)) headerMap.time = i;
+      else if(/OPEN/.test(c)) headerMap.open = i;
+      else if(/HIGH/.test(c)) headerMap.high = i;
+      else if(/LOW/.test(c)) headerMap.low = i;
+      else if(/CLOSE/.test(c)) headerMap.close = i;
+    });
+    rows = rows.slice(1);
+  } else {
+    // positional fallback: DATE,TIME,OPEN,HIGH,LOW,CLOSE,VOL  or DATE,OPEN,HIGH,LOW,CLOSE,VOL
+    const looksLikeTime = /^\d{1,2}:\d{2}/.test(rows[0][1]||'');
+    if(looksLikeTime){
+      headerMap = { date:0, time:1, open:2, high:3, low:4, close:5 };
+    } else {
+      headerMap = { date:0, time:null, open:1, high:2, low:3, close:4 };
+    }
+  }
+
+  const bars = [];
+  for(const r of rows){
+    if(r.length < 4) continue;
+    const dateStr = r[headerMap.date];
+    if(!dateStr) continue;
+    const timeStr = headerMap.time!=null ? (r[headerMap.time]||'00:00') : '00:00';
+    const dparts = dateStr.split(/[.\-\/]/).map(Number);
+    if(dparts.length < 3 || dparts.some(isNaN)) continue;
+    const [y,mo,d] = dparts;
+    const [hh,mm] = timeStr.split(':').map(Number);
+    const t = Math.floor(Date.UTC(y, mo-1, d, hh||0, mm||0) / 1000);
+    const o = parseFloat(r[headerMap.open]);
+    const h = parseFloat(r[headerMap.high]);
+    const l = parseFloat(r[headerMap.low]);
+    const c = parseFloat(r[headerMap.close]);
+    if([o,h,l,c].some(isNaN)) continue;
+    bars.push({ time: t, open:o, high:h, low:l, close:c });
+  }
+  bars.sort((a,b)=>a.time-b.time);
+  // dedupe same-timestamp rows
+  const seen = new Set();
+  return bars.filter(b=>{ if(seen.has(b.time)) return false; seen.add(b.time); return true; });
+}
+
+function loadBars(bars){
+  if(bars.length < 5){
+    alert('Не вдалось розпізнати дані у файлі — перевір формат CSV.');
+    return;
+  }
+  allBars = bars;
+  revealCount = Math.min(INITIAL_WINDOW, allBars.length);
+  closedTrades = [];
+  openPosition = null;
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('playbackControls').style.display = 'flex';
+  document.getElementById('sliderRow').style.display = 'flex';
+  document.getElementById('tradeBox').style.display = 'block';
+  const slider = document.getElementById('posSlider');
+  slider.min = INITIAL_WINDOW;
+  slider.max = allBars.length;
+  slider.value = revealCount;
+  renderTrades();
+  render(true);
+}
+
+function render(fit){
+  const visible = allBars.slice(0, revealCount);
+  if(fit) chart.priceScale('right').applyOptions({ autoScale: true });
+  candleSeries.setData(visible);
+  if(fit){
+    chart.timeScale().fitContent();
+    requestAnimationFrame(()=> chart.priceScale('right').applyOptions({ autoScale: false }));
+  }
+  document.getElementById('posSlider').value = revealCount;
+
+  const last = visible[visible.length-1];
+  const infoEl = document.getElementById('barInfo');
+  if(last){
+    const d = new Date(last.time*1000);
+    const ds = d.toISOString().slice(0,16).replace('T',' ');
+    infoEl.innerHTML = `
+      <span>${ds}</span>
+      <span>O <b>${last.open}</b></span>
+      <span>H <b>${last.high}</b></span>
+      <span>L <b>${last.low}</b></span>
+      <span>C <b>${last.close}</b></span>
+      <span>${revealCount} / ${allBars.length} барів</span>
+    `;
+  }
+  updateOpenPosInfo();
+  document.getElementById('stepFwdBtn').disabled = revealCount >= allBars.length;
+  document.getElementById('closeBtn').disabled = !openPosition;
+  document.getElementById('buyBtn').disabled = !!openPosition;
+  document.getElementById('sellBtn').disabled = !!openPosition;
+  repositionHandles();
+  redrawDrawings();
+}
+
+function stepForward(){
+  if(revealCount >= allBars.length){ pausePlay(); return; }
+  revealCount++;
+  checkStopHit();
+  render();
+}
+function stepBack(){
+  if(revealCount <= INITIAL_WINDOW) return;
+  revealCount--;
+  render();
+}
+
+function checkStopHit(){
+  if(!openPosition) return;
+  const bar = allBars[revealCount-1];
+  const { dir, slPrice, tpPrice } = openPosition;
+  let hitPrice = null;
+  if(dir==='long'){
+    if(slPrice!=null && bar.low <= slPrice) hitPrice = slPrice;
+    else if(tpPrice!=null && bar.high >= tpPrice) hitPrice = tpPrice;
+  } else {
+    if(slPrice!=null && bar.high >= slPrice) hitPrice = slPrice;
+    else if(tpPrice!=null && bar.low <= tpPrice) hitPrice = tpPrice;
+  }
+  if(hitPrice!=null) finishTrade(hitPrice);
+}
+
+function playPause(){
+  if(playing){ pausePlay(); return; }
+  playing = true;
+  document.getElementById('playPauseBtn').textContent = '⏸ Pause';
+  const speed = parseInt(document.getElementById('speedSelect').value);
+  playTimer = setInterval(()=>{
+    if(revealCount >= allBars.length){ pausePlay(); return; }
+    stepForward();
+  }, speed);
+}
+function pausePlay(){
+  playing = false;
+  document.getElementById('playPauseBtn').textContent = '▶ Play';
+  if(playTimer) clearInterval(playTimer);
+  playTimer = null;
+}
+
+document.getElementById('playPauseBtn').addEventListener('click', playPause);
+document.getElementById('stepFwdBtn').addEventListener('click', ()=>{ pausePlay(); stepForward(); });
+document.getElementById('stepBackBtn').addEventListener('click', ()=>{ pausePlay(); stepBack(); });
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  pausePlay();
+  revealCount = Math.min(INITIAL_WINDOW, allBars.length);
+  render(true);
+});
+document.getElementById('randomStartBtn').addEventListener('click', ()=>{
+  pausePlay();
+  const maxStart = Math.max(INITIAL_WINDOW, allBars.length - 30);
+  revealCount = INITIAL_WINDOW + Math.floor(Math.random() * Math.max(1, maxStart - INITIAL_WINDOW));
+  openPosition = null;
+  render(true);
+});
+document.getElementById('posSlider').addEventListener('input', (e)=>{
+  pausePlay();
+  revealCount = parseInt(e.target.value);
+  render(true);
+});
+document.getElementById('speedSelect').addEventListener('change', ()=>{
+  if(playing){ pausePlay(); playPause(); }
+});
+
+/* ===== Trade simulator ===== */
+function updateOpenPosInfo(){
+  const el = document.getElementById('openPosInfo');
+  if(!openPosition){ el.textContent = ''; return; }
+  const last = allBars[revealCount-1];
+  const diff = (last.close - openPosition.entry) * (openPosition.dir==='long'?1:-1);
+  const result = diff * openPosition.size * parseFloat(document.getElementById('pointValue').value || 1);
+  el.className = 'stat ' + (result>=0?'pos':'neg');
+  el.textContent = `Відкрито: ${openPosition.dir.toUpperCase()} @ ${openPosition.entry} — плаваючий: ${result>=0?'+':''}${result.toFixed(2)}`;
+}
+
+function removePositionLines(){
+  if(entryLine){ candleSeries.removePriceLine(entryLine); entryLine = null; }
+  if(slLine){ candleSeries.removePriceLine(slLine); slLine = null; }
+  if(tpLine){ candleSeries.removePriceLine(tpLine); tpLine = null; }
+  document.getElementById('slHandle').style.display = 'none';
+  document.getElementById('tpHandle').style.display = 'none';
+}
+
+function openTrade(dir){
+  if(openPosition || !allBars.length) return;
+  const last = allBars[revealCount-1];
+  const entry = last.close;
+
+  entryLine = candleSeries.createPriceLine({
+    price: entry, color: '#2FA660', lineWidth: 1,
+    lineStyle: LightweightCharts.LineStyle.Solid, axisLabelVisible: true, title: 'Вхід'
+  });
+
+  // default SL/TP placed ~50px above/below entry on screen, converted to price
+  const entryY = candleSeries.priceToCoordinate(entry) ?? 200;
+  const offsetPrice = Math.abs((candleSeries.coordinateToPrice(entryY - 50) ?? entry) - entry) || (entry*0.003);
+  const slPrice = dir==='long' ? entry - offsetPrice : entry + offsetPrice;
+  const tpPrice = dir==='long' ? entry + offsetPrice : entry - offsetPrice;
+
+  slLine = candleSeries.createPriceLine({
+    price: slPrice, color: '#C4453D', lineWidth: 1,
+    lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: true, title: 'SL'
+  });
+  tpLine = candleSeries.createPriceLine({
+    price: tpPrice, color: '#2FA660', lineWidth: 1,
+    lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: true, title: 'TP'
+  });
+
+  openPosition = { dir, entry, size: parseFloat(document.getElementById('tradeSize').value||1), slPrice, tpPrice };
+  render();
+  repositionHandles();
+}
+
+function finishTrade(exitPrice, reasonHit){
+  if(!openPosition) return;
+  const diff = (exitPrice - openPosition.entry) * (openPosition.dir==='long'?1:-1);
+  const result = diff * openPosition.size * parseFloat(document.getElementById('pointValue').value || 1);
+  closedTrades.push({ dir: openPosition.dir, entry: openPosition.entry, exit: exitPrice, size: openPosition.size, result, reason: reasonHit||'' });
+  removePositionLines();
+  openPosition = null;
+  renderTrades();
+  render();
+}
+
+function closeTrade(){
+  if(!openPosition) return;
+  const last = allBars[revealCount-1];
+  finishTrade(last.close, 'manual');
+}
+
+/* ===== SL/TP dragging ===== */
+function repositionHandles(){
+  const slEl = document.getElementById('slHandle');
+  const tpEl = document.getElementById('tpHandle');
+  if(!openPosition || !candleSeries){ slEl.style.display='none'; tpEl.style.display='none'; return; }
+  const chartH = document.getElementById('chart').clientHeight;
+  const slY = candleSeries.priceToCoordinate(openPosition.slPrice);
+  const tpY = candleSeries.priceToCoordinate(openPosition.tpPrice);
+  if(slY!=null && slY>=0 && slY<=chartH){ slEl.style.top = slY+'px'; slEl.style.display='block'; }
+  else slEl.style.display='none';
+  if(tpY!=null && tpY>=0 && tpY<=chartH){ tpEl.style.top = tpY+'px'; tpEl.style.display='block'; }
+  else tpEl.style.display='none';
+}
+
+function startDrag(target, e){
+  e.preventDefault();
+  dragTarget = target;
+  document.addEventListener('pointermove', onDragMove);
+  document.addEventListener('pointerup', onDragEnd);
+}
+let dragRafPending = false;
+function onDragMove(e){
+  if(!dragTarget || !openPosition) return;
+  if(dragRafPending) return;
+  dragRafPending = true;
+  requestAnimationFrame(()=>{
+    dragRafPending = false;
+    const rect = document.getElementById('chart').getBoundingClientRect();
+    const y = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
+    const price = candleSeries.coordinateToPrice(y);
+    if(price==null) return;
+    if(dragTarget==='sl'){
+      openPosition.slPrice = price;
+      slLine.applyOptions({ price });
+      document.getElementById('slHandle').style.top = y+'px';
+    } else {
+      openPosition.tpPrice = price;
+      tpLine.applyOptions({ price });
+      document.getElementById('tpHandle').style.top = y+'px';
+    }
+  });
+}
+function onDragEnd(){
+  dragTarget = null;
+  document.removeEventListener('pointermove', onDragMove);
+  document.removeEventListener('pointerup', onDragEnd);
+}
+document.getElementById('slHandle').addEventListener('pointerdown', (e)=>startDrag('sl', e));
+document.getElementById('tpHandle').addEventListener('pointerdown', (e)=>startDrag('tp', e));
+
+document.getElementById('buyBtn').addEventListener('click', ()=>openTrade('long'));
+document.getElementById('sellBtn').addEventListener('click', ()=>openTrade('short'));
+document.getElementById('closeBtn').addEventListener('click', closeTrade);
+
+function renderTrades(){
+  const body = document.getElementById('tradesBody');
+  const empty = document.getElementById('emptyTrades');
+  if(closedTrades.length === 0){
+    body.innerHTML = '';
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    body.innerHTML = closedTrades.map((t,i)=>`
+      <tr>
+        <td>${i+1}</td>
+        <td>${t.dir.toUpperCase()}</td>
+        <td>${t.entry}</td>
+        <td>${t.exit}</td>
+        <td>${t.size}</td>
+        <td class="result ${t.result>=0?'pos':'neg'}">${t.result>=0?'+':''}${t.result.toFixed(2)}</td>
+      </tr>
+    `).join('');
+  }
+  const total = closedTrades.reduce((s,t)=>s+t.result,0);
+  document.getElementById('tradeCount').textContent = closedTrades.length;
+  const totalEl = document.getElementById('totalResult');
+  totalEl.className = 'stat ' + (total>=0?'pos':'neg');
+  totalEl.textContent = (total>=0?'+':'') + total.toFixed(2);
+}
+
+/* ===== File / demo loading ===== */
+document.getElementById('fileInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    const bars = parseCSV(ev.target.result);
+    loadBars(bars);
+  };
+  reader.readAsText(file);
+});
+
+async function loadBinanceDemo(symbol){
+  try{
+    const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1h&limit=500`);
+    const data = await res.json();
+    const bars = data.map(k=>({
+      time: Math.floor(k[0]/1000),
+      open: parseFloat(k[1]), high: parseFloat(k[2]), low: parseFloat(k[3]), close: parseFloat(k[4])
+    }));
+    loadBars(bars);
+  }catch(e){
+    alert('Не вдалось завантажити демо-дані (можливо, немає інтернету або Binance недоступний з цієї мережі).');
+  }
+}
+document.getElementById('loadBtcBtn').addEventListener('click', ()=>loadBinanceDemo('BTCUSDT'));
+document.getElementById('loadEthBtn').addEventListener('click', ()=>loadBinanceDemo('ETHUSDT'));
+
+/* ===== Drawing tools ===== */
+function setTool(tool){
+  currentTool = tool;
+  drawInProgress = null;
+  document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
+  const idMap = { cursor:'toolCursor', line:'toolLine', hline:'toolHLine', rect:'toolRect', high:'toolHigh', low:'toolLow' };
+  document.getElementById(idMap[tool]).classList.add('active');
+  drawCanvas.classList.toggle('active', tool!=='cursor');
+}
+document.getElementById('toolCursor').addEventListener('click', ()=>setTool('cursor'));
+document.getElementById('toolLine').addEventListener('click', ()=>setTool('line'));
+document.getElementById('toolHLine').addEventListener('click', ()=>setTool('hline'));
+document.getElementById('toolRect').addEventListener('click', ()=>setTool('rect'));
+document.getElementById('toolHigh').addEventListener('click', ()=>setTool('high'));
+document.getElementById('toolLow').addEventListener('click', ()=>setTool('low'));
+document.getElementById('clearDrawBtn').addEventListener('click', ()=>{
+  drawings = [];
+  markers = [];
+  if(candleSeries) candleSeries.setMarkers([]);
+  redrawDrawings();
+});
+
+function pxToPoint(x, y){
+  const rect = drawCanvas.getBoundingClientRect();
+  const cx = Math.max(0, Math.min(rect.width, x));
+  const cy = Math.max(0, Math.min(rect.height, y));
+  const time = chart.timeScale().coordinateToTime(cx);
+  const price = candleSeries.coordinateToPrice(cy);
+  return { time, price, x: cx, y: cy };
+}
+function nearestBar(x){
+  if(!allBars.length) return null;
+  const time = chart.timeScale().coordinateToTime(x);
+  if(time==null) return null;
+  const visible = allBars.slice(0, revealCount);
+  let best = visible[0], bestDiff = Infinity;
+  for(const b of visible){
+    const diff = Math.abs(b.time - time);
+    if(diff < bestDiff){ bestDiff = diff; best = b; }
+  }
+  return best;
+}
+
+document.getElementById('drawCanvas').addEventListener('pointerdown', (e)=>{
+  if(currentTool==='cursor') return;
+  const rect = drawCanvas.getBoundingClientRect();
+  const x = e.clientX - rect.left, y = e.clientY - rect.top;
+
+  if(currentTool==='hline'){
+    const price = candleSeries.coordinateToPrice(y);
+    if(price!=null) drawings.push({ type:'hline', p1:{ price } });
+    redrawDrawings();
+    return;
+  }
+  if(currentTool==='high' || currentTool==='low'){
+    const bar = nearestBar(x);
+    if(bar){
+      markers.push({
+        time: bar.time,
+        position: currentTool==='high' ? 'aboveBar' : 'belowBar',
+        color: currentTool==='high' ? '#2FA660' : '#C4453D',
+        shape: currentTool==='high' ? 'arrowDown' : 'arrowUp',
+        text: currentTool==='high' ? 'H' : 'L',
+      });
+      markers.sort((a,b)=>a.time-b.time);
+      candleSeries.setMarkers(markers);
+    }
+    return;
+  }
+  // line or rect: start drag — abort if the click doesn't resolve to a real point
+  // (e.g. outside the plotted data), which previously produced invisible drawings
+  const p = pxToPoint(x, y);
+  if(p.time==null || p.price==null) return;
+  drawInProgress = { type: currentTool, p1: p, p2: p };
+  document.addEventListener('pointermove', onDrawMove);
+  document.addEventListener('pointerup', onDrawEnd);
+});
+
+let drawRafPending = false;
+function onDrawMove(e){
+  if(!drawInProgress) return;
+  if(drawRafPending) return;
+  drawRafPending = true;
+  requestAnimationFrame(()=>{
+    drawRafPending = false;
+    if(!drawInProgress) return;
+    const rect = drawCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left, y = e.clientY - rect.top;
+    const p = pxToPoint(x, y);
+    if(p.time==null || p.price==null) return;
+    drawInProgress.p2 = p;
+    redrawDrawings();
+  });
+}
+function onDrawEnd(){
+  if(drawInProgress){
+    drawings.push(drawInProgress);
+    drawInProgress = null;
+  }
+  document.removeEventListener('pointermove', onDrawMove);
+  document.removeEventListener('pointerup', onDrawEnd);
+  redrawDrawings();
+}
+
+function redrawDrawings(){
+  if(!drawCtx) return;
+  drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+  const all = drawInProgress ? [...drawings, drawInProgress] : drawings;
+  for(const d of all){
+    if(d.type === 'hline'){
+      const y = candleSeries.priceToCoordinate(d.p1.price);
+      if(y==null) continue;
+      drawCtx.strokeStyle = '#2FA660';
+      drawCtx.lineWidth = 1;
+      drawCtx.setLineDash([5,4]);
+      drawCtx.beginPath();
+      drawCtx.moveTo(0, y);
+      drawCtx.lineTo(drawCanvas.width, y);
+      drawCtx.stroke();
+      drawCtx.setLineDash([]);
+    } else {
+      const x1 = chart.timeScale().timeToCoordinate(d.p1.time);
+      const y1 = candleSeries.priceToCoordinate(d.p1.price);
+      const x2 = chart.timeScale().timeToCoordinate(d.p2.time);
+      const y2 = candleSeries.priceToCoordinate(d.p2.price);
+      if(x1==null||y1==null||x2==null||y2==null) continue;
+      if(d.type === 'line'){
+        drawCtx.strokeStyle = '#E8A33D';
+        drawCtx.lineWidth = 1.5;
+        drawCtx.beginPath();
+        drawCtx.moveTo(x1,y1);
+        drawCtx.lineTo(x2,y2);
+        drawCtx.stroke();
+      } else if(d.type === 'rect'){
+        drawCtx.fillStyle = 'rgba(47,166,96,0.12)';
+        drawCtx.strokeStyle = 'rgba(47,166,96,0.6)';
+        drawCtx.lineWidth = 1;
+        const rx = Math.min(x1,x2), ry = Math.min(y1,y2);
+        const rw = Math.abs(x2-x1), rh = Math.abs(y2-y1);
+        drawCtx.fillRect(rx,ry,rw,rh);
+        drawCtx.strokeRect(rx,ry,rw,rh);
+      }
+    }
+  }
+}
+
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape'){
+    if(drawInProgress){
+      drawInProgress = null;
+      document.removeEventListener('pointermove', onDrawMove);
+      document.removeEventListener('pointerup', onDrawEnd);
+      redrawDrawings();
+    }
+    setTool('cursor');
+  }
+});
+
+document.getElementById('refreshBtn').addEventListener('click', async ()=>{
+  try{
+    if('caches' in window){
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k=>caches.delete(k)));
+    }
+    if('serviceWorker' in navigator){
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r=>r.unregister()));
+    }
+  }catch(e){}
+  const url = window.location.pathname + '?v=' + Date.now();
+  window.location.replace(url);
+});
+
+initChart();
+</script>
+</body>
+</html>
