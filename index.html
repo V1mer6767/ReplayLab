@@ -676,16 +676,26 @@ function openTrade(dir){
     lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: true, title: 'TP'
   });
 
-  openPosition = { dir, entry, size: parseFloat(document.getElementById('tradeSize').value||1), slPrice, tpPrice };
+  openPosition = { dir, entry, entryTime: last.time, size: parseFloat(document.getElementById('tradeSize').value||1), slPrice, tpPrice };
   render();
   repositionHandles();
 }
 
 function finishTrade(exitPrice, reasonHit){
   if(!openPosition) return;
+  const exitTime = allBars[revealCount-1].time;
   const diff = (exitPrice - openPosition.entry) * (openPosition.dir==='long'?1:-1);
   const result = diff * openPosition.size * parseFloat(document.getElementById('pointValue').value || 1);
   closedTrades.push({ dir: openPosition.dir, entry: openPosition.entry, exit: exitPrice, size: openPosition.size, result, reason: reasonHit||'' });
+
+  // leave a persistent trade line on the chart, colored by outcome
+  drawings.push({
+    type:'trade',
+    p1:{ time: openPosition.entryTime, price: openPosition.entry },
+    p2:{ time: exitTime, price: exitPrice },
+    win: result >= 0,
+  });
+
   removePositionLines();
   openPosition = null;
   renderTrades();
@@ -931,6 +941,26 @@ function redrawDrawings(){
         const rw = Math.abs(x2-x1), rh = Math.abs(y2-y1);
         drawCtx.fillRect(rx,ry,rw,rh);
         drawCtx.strokeRect(rx,ry,rw,rh);
+      } else if(d.type === 'trade'){
+        const color = d.win ? '#26a69a' : '#ef5350';
+        drawCtx.strokeStyle = color;
+        drawCtx.lineWidth = 1.5;
+        drawCtx.setLineDash([4,3]);
+        drawCtx.beginPath();
+        drawCtx.moveTo(x1,y1);
+        drawCtx.lineTo(x2,y2);
+        drawCtx.stroke();
+        drawCtx.setLineDash([]);
+
+        drawCtx.fillStyle = color;
+        drawCtx.beginPath(); drawCtx.arc(x1,y1,3.5,0,Math.PI*2); drawCtx.fill();
+        drawCtx.beginPath(); drawCtx.arc(x2,y2,3.5,0,Math.PI*2); drawCtx.fill();
+
+        drawCtx.font = '600 10px IBM Plex Mono, monospace';
+        drawCtx.fillStyle = color;
+        drawCtx.textBaseline = 'middle';
+        const label = d.win ? '▲' : '▼';
+        drawCtx.fillText(label, x2 + 6, y2);
       }
     }
   }
