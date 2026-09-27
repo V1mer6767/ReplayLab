@@ -25,6 +25,19 @@
     --short:#ef5350;
     --short-dim:#3a1c1b;
   }
+  :root[data-theme="light"]{
+    --bg:#ffffff;
+    --panel:#f8f9fd;
+    --panel-2:#eef0f6;
+    --border:#e0e3eb;
+    --text:#131722;
+    --muted:#787b86;
+    --muted-2:#5d606b;
+    --accent-dim:#e8f0ff;
+    --long-dim:#dff5f1;
+    --short-dim:#fde8e8;
+  }
+  body{ transition: background-color .15s, color .15s; }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
@@ -175,7 +188,10 @@
         <p class="subtitle">бектест на реальній історії</p>
       </div>
     </div>
-    <button class="btn" id="refreshBtn" title="Підтягнути свіжу версію сторінки">⟳ Оновити</button>
+    <div style="display:flex; gap:8px;">
+      <button class="btn" id="themeToggle" title="Перемкнути тему">🌙</button>
+      <button class="btn" id="refreshBtn" title="Підтягнути свіжу версію сторінки">⟳ Оновити</button>
+    </div>
   </header>
 
   <div class="panel-box">
@@ -855,6 +871,30 @@ document.addEventListener('keydown', (e)=>{
     }
     setTool('cursor');
   }
+});
+
+let currentTheme = 'dark';
+function applyChartTheme(theme){
+  if(!chart) return;
+  const light = theme === 'light';
+  chart.applyOptions({
+    layout: {
+      background: { color: light ? '#ffffff' : '#131722' },
+      textColor: light ? '#5d606b' : '#787b86',
+    },
+    grid: {
+      vertLines: { color: light ? '#e0e3eb' : '#1e222d' },
+      horzLines: { color: light ? '#e0e3eb' : '#1e222d' },
+    },
+    rightPriceScale: { borderColor: light ? '#e0e3eb' : '#2a2e39' },
+    timeScale: { borderColor: light ? '#e0e3eb' : '#2a2e39' },
+  });
+}
+document.getElementById('themeToggle').addEventListener('click', ()=>{
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  document.getElementById('themeToggle').textContent = currentTheme === 'dark' ? '🌙' : '☀️';
+  applyChartTheme(currentTheme);
 });
 
 document.getElementById('refreshBtn').addEventListener('click', async ()=>{
