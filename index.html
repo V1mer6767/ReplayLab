@@ -39,17 +39,20 @@
   }
   body{ transition: background-color .15s, color .15s; }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
+  html,body{margin:0;padding:0; height:100%; overflow:hidden;}
   body{
-    background:var(--bg); color:var(--text); min-height:100vh;
+    background:var(--bg); color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   .mono{font-family:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;}
-  .app{max-width:1320px; margin:0 auto; padding:0 16px 40px;}
+  .app{
+    height:100vh; max-width:none; margin:0; padding:0 12px 8px;
+    display:flex; flex-direction:column;
+  }
 
   header{
     display:flex; justify-content:space-between; align-items:center;
-    padding:10px 4px; border-bottom:1px solid var(--border); margin-bottom:14px;
+    padding:8px 4px; border-bottom:1px solid var(--border); margin-bottom:8px; flex-shrink:0;
   }
   .brand{display:flex; align-items:center; gap:9px;}
   .brand-dot{width:9px; height:9px; border-radius:50%; background:var(--accent);}
@@ -75,7 +78,7 @@
 
   .panel-box{
     border:1px solid var(--border); border-radius:6px; background:var(--panel);
-    padding:12px 14px; margin-bottom:14px;
+    padding:8px 12px; margin-bottom:8px; flex-shrink:0;
   }
   .panel-title{
     font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.08em;
@@ -84,11 +87,11 @@
 
   .loader-row{display:flex; gap:9px; align-items:center; flex-wrap:wrap;}
   .loader-row input[type=file]{ font-size:12px; color:var(--muted-2); }
-  .hint{font-size:11px; color:var(--muted); margin-top:9px; line-height:1.6;}
+  .hint{font-size:10.5px; color:var(--muted); margin:0 0 0 4px; display:inline-block;}
   .hint b{color:var(--muted-2);}
 
   /* ===== Chart shell: vertical toolbar + chart, TradingView style ===== */
-  .chart-shell{ display:flex; gap:0; border:1px solid var(--border); border-radius:6px; overflow:hidden; margin-bottom:12px; }
+  .chart-shell{ display:flex; gap:0; border:1px solid var(--border); border-radius:6px; overflow:hidden; flex:1; min-height:0; }
   .tool-sidebar{
     display:flex; flex-direction:column; gap:3px; padding:10px 7px;
     background:var(--panel); border-right:1px solid var(--border); flex-shrink:0;
@@ -111,10 +114,10 @@
   }
   .tool-clear-btn:hover{color:var(--short); background:var(--short-dim);}
 
-  .chart-main{flex:1; min-width:0; display:flex; flex-direction:column;}
+  .chart-main{flex:1; min-width:0; min-height:0; display:flex; flex-direction:column;}
 
-  #chartWrap{ background:var(--bg); position:relative; }
-  #chart{width:100%; height:460px;}
+  #chartWrap{ background:var(--bg); position:relative; flex:1; min-height:0; }
+  #chart{width:100%; height:100%;}
   #drawCanvas{ position:absolute; inset:0; pointer-events:none; z-index:4; cursor:crosshair; }
   #drawCanvas.active{ pointer-events:auto; }
 
@@ -171,6 +174,41 @@
   .result.pos{color:var(--long);}
   .result.neg{color:var(--short);}
   .empty-trades{color:var(--muted); font-size:12px; padding:10px 0;}
+
+  /* ===== Right slide-out trade panel ===== */
+  .trade-panel{ display:none; flex-shrink:0; border-left:1px solid var(--border); background:var(--panel); }
+  .trade-panel-tab{
+    writing-mode:vertical-rl; text-orientation:mixed; width:32px; border:none;
+    background:transparent; color:var(--muted-2); cursor:pointer;
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.1em; padding:16px 0;
+  }
+  .trade-panel-tab:hover{ color:var(--text); background:var(--panel-2); }
+  .trade-panel.open .trade-panel-tab{ background:var(--accent-dim); color:var(--accent); }
+  .trade-panel-body{
+    width:0; overflow:hidden; padding:0; display:flex; flex-direction:column; gap:8px;
+    transition:width .16s ease, padding .16s ease; white-space:nowrap;
+  }
+  .trade-panel.open .trade-panel-body{ width:200px; padding:12px; }
+  .trade-panel-body input, .trade-panel-body .btn{ width:100%; }
+
+  /* ===== Bottom trade log drawer ===== */
+  .app{ padding-bottom:34px; }
+  .trade-drawer{
+    position:fixed; left:0; right:0; bottom:0; background:var(--panel);
+    border-top:1px solid var(--border); z-index:30;
+    display:none; flex-direction:column-reverse;
+  }
+  .trade-drawer-header{
+    display:flex; align-items:center; gap:10px; padding:8px 14px; cursor:pointer;
+    font-size:12px; color:var(--muted-2);
+  }
+  .trade-drawer-header .stat{ margin-left:auto; }
+  #drawerChevron{ transition:transform .15s; flex-shrink:0; }
+  .trade-drawer.open #drawerChevron{ transform:rotate(180deg); }
+  .trade-drawer-body{
+    max-height:0; overflow-y:auto; padding:0 14px; transition:max-height .16s ease;
+  }
+  .trade-drawer.open .trade-drawer-body{ max-height:280px; padding:4px 14px 14px; }
 
   footer{margin-top:6px; text-align:center; color:var(--muted); font-size:10.5px; font-family:'IBM Plex Mono',monospace;}
 
@@ -272,29 +310,38 @@
 
       <div class="bar-info" id="barInfo"></div>
     </div>
+
+    <div class="trade-panel" id="tradePanel">
+      <button class="trade-panel-tab" id="tradePanelTab" title="Угода">УГОДА</button>
+      <div class="trade-panel-body" id="tradePanelBody">
+        <p class="panel-title" style="margin-bottom:8px;">Симулятор угод</p>
+        <label class="mono" style="font-size:11px; color:var(--muted-2);">Обʼєм</label>
+        <input type="number" id="tradeSize" value="1" step="0.01">
+        <label class="mono" style="font-size:11px; color:var(--muted-2);">$/пункт</label>
+        <input type="number" id="pointValue" value="1" step="0.01">
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-long" id="buyBtn" style="flex:1;">Buy</button>
+          <button class="btn btn-short" id="sellBtn" style="flex:1;">Sell</button>
+        </div>
+        <button class="btn" id="closeBtn" disabled>Close</button>
+        <span class="stat" id="openPosInfo"></span>
+      </div>
+    </div>
   </div>
 
-  <div class="panel-box" id="tradeBox" style="display:none;">
-    <div class="trade-row">
-      <label class="mono" style="font-size:11px; color:var(--muted-2);">Обʼєм</label>
-      <input type="number" id="tradeSize" value="1" step="0.01" style="width:80px;">
-      <label class="mono" style="font-size:11px; color:var(--muted-2);">$/пункт</label>
-      <input type="number" id="pointValue" value="1" step="0.01" style="width:80px;">
-      <button class="btn btn-long" id="buyBtn">Buy</button>
-      <button class="btn btn-short" id="sellBtn">Sell</button>
-      <button class="btn" id="closeBtn" disabled>Close</button>
-      <div class="spacer"></div>
-      <span class="stat" id="openPosInfo"></span>
+  <div class="trade-drawer" id="tradeDrawer">
+    <div class="trade-drawer-header" id="tradeDrawerHeader">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="drawerChevron"><path d="M18 15l-6-6-6 6"/></svg>
+      <span class="mono">Угоди (<b id="tradeCount">0</b>)</span>
+      <span class="stat" id="totalResult">0</span>
     </div>
-    <div style="margin-top:14px; display:flex; gap:24px; flex-wrap:wrap;">
-      <span class="mono" style="font-size:12px; color:var(--muted-2);">Угод: <b id="tradeCount" style="color:var(--text);">0</b></span>
-      <span class="mono" style="font-size:12px; color:var(--muted-2);">Разом: <span class="stat" id="totalResult">0</span></span>
+    <div class="trade-drawer-body" id="tradeDrawerBody">
+      <table>
+        <thead><tr><th>#</th><th>Напрямок</th><th>Вхід</th><th>Вихід</th><th>Обʼєм</th><th>Результат</th></tr></thead>
+        <tbody id="tradesBody"></tbody>
+      </table>
+      <div class="empty-trades" id="emptyTrades">Ще немає угод у цій сесії — натисни Buy або Sell на поточній свічці.</div>
     </div>
-    <table>
-      <thead><tr><th>#</th><th>Напрямок</th><th>Вхід</th><th>Вихід</th><th>Обʼєм</th><th>Результат</th></tr></thead>
-      <tbody id="tradesBody"></tbody>
-    </table>
-    <div class="empty-trades" id="emptyTrades">Ще немає угод у цій сесії — натисни Buy або Sell на поточній свічці.</div>
   </div>
 
   </div>
@@ -320,6 +367,7 @@ const INITIAL_WINDOW = 60;
 function initChart(){
   const container = document.getElementById('chart');
   chart = LightweightCharts.createChart(container, {
+    autoSize: true,
     layout: { background: { color: '#131722' }, textColor: '#787b86' },
     grid: { vertLines: { color: '#1e222d' }, horzLines: { color: '#1e222d' } },
     rightPriceScale: { borderColor: '#2a2e39' },
@@ -331,17 +379,10 @@ function initChart(){
     borderUpColor: '#26a69a', borderDownColor: '#ef5350',
     wickUpColor: '#26a69a', wickDownColor: '#ef5350',
   });
-  let lastWidth = 0;
-  new ResizeObserver(entries=>{
-    for(const e of entries){
-      const w = Math.round(e.contentRect.width);
-      if(w === lastWidth) continue;
-      lastWidth = w;
-      chart.applyOptions({ width: w });
-      resizeDrawCanvas();
-      repositionHandles();
-      redrawDrawings();
-    }
+  new ResizeObserver(()=>{
+    resizeDrawCanvas();
+    repositionHandles();
+    redrawDrawings();
   }).observe(container);
   chart.timeScale().subscribeVisibleLogicalRangeChange(()=> { repositionHandles(); redrawDrawings(); });
 
@@ -441,7 +482,8 @@ function loadBars(bars){
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('playbackControls').style.display = 'flex';
   document.getElementById('sliderRow').style.display = 'flex';
-  document.getElementById('tradeBox').style.display = 'block';
+  document.getElementById('tradePanel').style.display = 'flex';
+  document.getElementById('tradeDrawer').style.display = 'flex';
   const slider = document.getElementById('posSlider');
   slider.min = INITIAL_WINDOW;
   slider.max = allBars.length;
@@ -884,6 +926,14 @@ function applyChartTheme(theme){
     timeScale: { borderColor: light ? '#e0e3eb' : '#2a2e39' },
   });
 }
+document.getElementById('tradePanelTab').addEventListener('click', ()=>{
+  document.getElementById('tradePanel').classList.toggle('open');
+  setTimeout(()=>{ resizeDrawCanvas(); repositionHandles(); redrawDrawings(); }, 180);
+});
+document.getElementById('tradeDrawerHeader').addEventListener('click', ()=>{
+  document.getElementById('tradeDrawer').classList.toggle('open');
+});
+
 document.getElementById('themeToggle').addEventListener('click', ()=>{
   currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', currentTheme);
